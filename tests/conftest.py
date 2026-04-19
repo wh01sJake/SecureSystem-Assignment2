@@ -63,6 +63,20 @@ def rijndael():
     lib.expand_key.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
     lib.expand_key.restype = ctypes.POINTER(ctypes.c_ubyte)
 
+    lib.aes_encrypt_block.argtypes = [
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.c_int,
+    ]
+    lib.aes_encrypt_block.restype = ctypes.POINTER(ctypes.c_ubyte)
+
+    lib.aes_decrypt_block.argtypes = [
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.c_int,
+    ]
+    lib.aes_decrypt_block.restype = ctypes.POINTER(ctypes.c_ubyte)
+
     return lib
 
 
