@@ -48,6 +48,11 @@ def rijndael():
     lib.invert_shift_rows.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
     lib.invert_shift_rows.restype = None
 
+    lib.mix_columns.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
+    lib.mix_columns.restype = None
+    lib.invert_mix_columns.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
+    lib.invert_mix_columns.restype = None
+
     return lib
 
 

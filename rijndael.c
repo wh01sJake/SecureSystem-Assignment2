@@ -142,8 +142,34 @@ void shift_rows(unsigned char *block, aes_block_size_t block_size) {
   block[3] = temp;
 }
 
+// GF(2^8) multiplication by 2. If the top bit is set we reduce modulo
+// the AES irreducible polynomial 0x1b (FIPS-197 §4.2). This is the only
+// GF multiplication primitive we actually need — bigger coefficients
+// like 3 are just (xtime(a) ^ a), and mix_columns composes everything
+// out of these.
+static unsigned char xtime(unsigned char a) {
+  return (a & 0x80) ? ((a << 1) ^ 0x1b) : (a << 1);
+}
+
+// Mix a single 4-byte column in place. Using the reference's compact
+// form of the matrix multiplication — the t/u bookkeeping avoids
+// needing a separate temp array for the whole column.
+static void mix_single_column(unsigned char *col) {
+  unsigned char t = col[0] ^ col[1] ^ col[2] ^ col[3];
+  unsigned char u = col[0];
+  col[0] ^= t ^ xtime(col[0] ^ col[1]);
+  col[1] ^= t ^ xtime(col[1] ^ col[2]);
+  col[2] ^= t ^ xtime(col[2] ^ col[3]);
+  col[3] ^= t ^ xtime(col[3] ^ u);
+}
+
 void mix_columns(unsigned char *block, aes_block_size_t block_size) {
-  // TODO: Implement me!
+  // Each group of 4 consecutive bytes is a column in the AES sense,
+  // because the linear byte stream fills columns first (see FIPS-197
+  // §3.4). Mix them independently.
+  for (size_t i = 0; i < 4; i++) {
+    mix_single_column(&block[i * 4]);
+  }
 }
 
 /*
@@ -187,7 +213,21 @@ void invert_shift_rows(unsigned char *block, aes_block_size_t block_size) {
 }
 
 void invert_mix_columns(unsigned char *block, aes_block_size_t block_size) {
-  // TODO: Implement me!
+  // Trick from the reference: pre-adjust each column with two
+  // xtime-of-xtime xors, then run the forward mix_columns to finish.
+  // This dodges having to compute the inverse matrix (with coefficients
+  // 0x0E, 0x0B, 0x0D, 0x09) directly, which would be more code and
+  // easier to mess up.
+  for (size_t i = 0; i < 4; i++) {
+    unsigned char *col = &block[i * 4];
+    unsigned char u = xtime(xtime(col[0] ^ col[2]));
+    unsigned char v = xtime(xtime(col[1] ^ col[3]));
+    col[0] ^= u;
+    col[1] ^= v;
+    col[2] ^= u;
+    col[3] ^= v;
+  }
+  mix_columns(block, block_size);
 }
 
 /*
