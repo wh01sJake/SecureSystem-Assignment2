@@ -1,6 +1,15 @@
 /*
- * TODO: Add your name and student number here, along with
- *       a brief description of this code.
+ * Secure Systems Development — Assignment 2
+ * AES-128 (Rijndael) implementation in C.
+ *
+ * Author: Likun Fang
+ * Student Number: A00049290
+ *
+ * This file contains the full AES-128 block cipher: S-box and inverse
+ * S-box tables, the four round operations (SubBytes, ShiftRows,
+ * MixColumns, AddRoundKey) and their inverses, the key expansion, and
+ * the two public functions aes_encrypt_block / aes_decrypt_block.
+ * See the accompanying report for details and testing notes.
  */
 
 #include <stdio.h>

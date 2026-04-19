@@ -1,6 +1,13 @@
 /*
- * TODO: Add your name and student number here, along with
- *       a brief description of this code.
+ * Secure Systems Development — Assignment 2
+ * AES-128 (Rijndael) public header.
+ *
+ * Author: Likun Fang
+ * Student Number: A00049290
+ *
+ * Exposes the two block-level entry points, aes_encrypt_block and
+ * aes_decrypt_block, the block-size enum used by the starter code,
+ * and the block_access helper for pretty-printing a 4x4 state.
  */
 
 #ifndef RIJNDAEL_H
