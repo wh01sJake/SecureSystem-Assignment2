@@ -60,6 +60,9 @@ def rijndael():
     ]
     lib.add_round_key.restype = None
 
+    lib.expand_key.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
+    lib.expand_key.restype = ctypes.POINTER(ctypes.c_ubyte)
+
     return lib
 
 
@@ -78,7 +81,10 @@ def bytes_to_matrix(data):
 
 
 def matrix_to_bytes(matrix):
-    return bytes(sum(matrix, []))
+    # Works whether each row is a list or a bytes object — iterating over
+    # either gives integers. boppreh's key expansion returns a mix, which
+    # broke the old sum-based flatten.
+    return bytes(b for row in matrix for b in row)
 
 
 def to_c_buffer(data):

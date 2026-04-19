@@ -57,6 +57,17 @@ static const unsigned char inv_s_box[256] = {
   0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 };
 
+/*
+ * Round constants used by key expansion (FIPS-197 §5.2).
+ * The spec numbers rounds from 1, so r_con[0] = 0x00 is a placeholder
+ * we never actually index into — this way r_con[1] is the round-1
+ * constant, r_con[2] is round-2, etc. Makes the expand_key code read
+ * more like the spec.
+ */
+static const unsigned char r_con[11] = {
+  0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
+};
+
 size_t block_size_to_bytes(aes_block_size_t block_size) {
   switch (block_size) {
   case AES_BLOCK_128:
@@ -250,8 +261,50 @@ void add_round_key(unsigned char *block,
  * vector, containing the 11 round keys one after the other
  */
 unsigned char *expand_key(unsigned char *cipher_key, aes_block_size_t block_size) {
-  // TODO: Implement me!
-  return 0;
+  // AES-128: 11 round keys × 16 bytes = 176 bytes total.
+  // Round 0 is just the cipher key verbatim. After that we derive each
+  // 4-byte word from the previous one, with a schedule_core step every
+  // 16 bytes (at the start of each new round key).
+  unsigned char *expanded = (unsigned char *)malloc(176);
+  memcpy(expanded, cipher_key, 16);
+
+  unsigned char temp[4];
+
+  for (size_t i = 16; i < 176; i += 4) {
+    // Previous word.
+    temp[0] = expanded[i - 4];
+    temp[1] = expanded[i - 3];
+    temp[2] = expanded[i - 2];
+    temp[3] = expanded[i - 1];
+
+    if (i % 16 == 0) {
+      // RotWord: cyclic left shift by 1.
+      unsigned char t = temp[0];
+      temp[0] = temp[1];
+      temp[1] = temp[2];
+      temp[2] = temp[3];
+      temp[3] = t;
+
+      // SubWord: S-box each byte.
+      temp[0] = s_box[temp[0]];
+      temp[1] = s_box[temp[1]];
+      temp[2] = s_box[temp[2]];
+      temp[3] = s_box[temp[3]];
+
+      // XOR first byte with the round constant. The round number for
+      // this iteration is (i / 16), and I'm going to be careful about
+      // the off-by-one since Rcon is traditionally indexed from 1.
+      temp[0] ^= r_con[(i / 16) - 1];
+    }
+
+    // New word = temp XOR word 16 bytes earlier.
+    expanded[i + 0] = temp[0] ^ expanded[i - 16];
+    expanded[i + 1] = temp[1] ^ expanded[i - 15];
+    expanded[i + 2] = temp[2] ^ expanded[i - 14];
+    expanded[i + 3] = temp[3] ^ expanded[i - 13];
+  }
+
+  return expanded;
 }
 
 /*
