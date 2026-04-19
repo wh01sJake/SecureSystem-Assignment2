@@ -112,20 +112,21 @@ void sub_bytes(unsigned char *block, aes_block_size_t block_size) {
 }
 
 void shift_rows(unsigned char *block, aes_block_size_t block_size) {
-  // Each AES row shifts by its row index. Row 0 doesn't move.
-  // Looking at the FIPS-197 diagram, the rotation arrow points the
-  // other way from what I first guessed — let me try rotating the
-  // positions to the right and see if the tests agree.
+  // Each row shifts LEFT by its row index — I had this the wrong way
+  // round on the first attempt. Row 0 is untouched, row 1 rotates left
+  // by 1, row 2 by 2, row 3 by 3. Interesting gotcha: row 2 and row 3
+  // come out looking the same in either direction so only rows 1 and 3
+  // actually revealed the mistake in tests.
   unsigned char temp;
 
-  // Row 1: rotate right by 1.
-  temp = block[13];
-  block[13] = block[9];
-  block[9] = block[5];
-  block[5] = block[1];
-  block[1] = temp;
+  // Row 1: rotate LEFT by 1.
+  temp = block[1];
+  block[1] = block[5];
+  block[5] = block[9];
+  block[9] = block[13];
+  block[13] = temp;
 
-  // Row 2: rotate by 2 (same thing in either direction on 4 elements).
+  // Row 2: rotate by 2 (direction doesn't matter on 4 elements).
   temp = block[2];
   block[2] = block[10];
   block[10] = temp;
@@ -133,12 +134,12 @@ void shift_rows(unsigned char *block, aes_block_size_t block_size) {
   block[6] = block[14];
   block[14] = temp;
 
-  // Row 3: rotate right by 3.
-  temp = block[3];
-  block[3] = block[7];
-  block[7] = block[11];
-  block[11] = block[15];
-  block[15] = temp;
+  // Row 3: rotate LEFT by 3 (same as rotating right by 1).
+  temp = block[15];
+  block[15] = block[11];
+  block[11] = block[7];
+  block[7] = block[3];
+  block[3] = temp;
 }
 
 void mix_columns(unsigned char *block, aes_block_size_t block_size) {
@@ -158,18 +159,16 @@ void invert_sub_bytes(unsigned char *block, aes_block_size_t block_size) {
 }
 
 void invert_shift_rows(unsigned char *block, aes_block_size_t block_size) {
-  // Inverse of shift_rows, so it should undo whatever shift_rows did.
-  // Pairing them up as forward-left / inverse-right based on the FIPS
-  // diagram — if shift_rows ends up needing a fix, this one needs to
-  // be updated to match.
+  // Inverse: rotate every row RIGHT by its index. Since I fixed
+  // shift_rows to go left, this one now goes the other way to undo it.
   unsigned char temp;
 
-  // Row 1: rotate left by 1.
-  temp = block[1];
-  block[1] = block[5];
-  block[5] = block[9];
-  block[9] = block[13];
-  block[13] = temp;
+  // Row 1: rotate RIGHT by 1.
+  temp = block[13];
+  block[13] = block[9];
+  block[9] = block[5];
+  block[5] = block[1];
+  block[1] = temp;
 
   // Row 2: rotate by 2.
   temp = block[2];
@@ -179,12 +178,12 @@ void invert_shift_rows(unsigned char *block, aes_block_size_t block_size) {
   block[6] = block[14];
   block[14] = temp;
 
-  // Row 3: rotate left by 3.
-  temp = block[15];
-  block[15] = block[11];
-  block[11] = block[7];
-  block[7] = block[3];
-  block[3] = temp;
+  // Row 3: rotate RIGHT by 3.
+  temp = block[3];
+  block[3] = block[7];
+  block[7] = block[11];
+  block[11] = block[15];
+  block[15] = temp;
 }
 
 void invert_mix_columns(unsigned char *block, aes_block_size_t block_size) {
