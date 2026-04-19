@@ -291,10 +291,12 @@ unsigned char *expand_key(unsigned char *cipher_key, aes_block_size_t block_size
       temp[2] = s_box[temp[2]];
       temp[3] = s_box[temp[3]];
 
-      // XOR first byte with the round constant. The round number for
-      // this iteration is (i / 16), and I'm going to be careful about
-      // the off-by-one since Rcon is traditionally indexed from 1.
-      temp[0] ^= r_con[(i / 16) - 1];
+      // XOR first byte with the round constant. My first attempt used
+      // (i/16)-1 thinking the schedule is 0-indexed — but because
+      // r_con[0] is just a placeholder 0x00, I should use r_con[i/16]
+      // directly. The tests caught this by reporting a 1-bit diff at
+      // byte 16 of the expanded key (the exact XOR that went missing).
+      temp[0] ^= r_con[i / 16];
     }
 
     // New word = temp XOR word 16 bytes earlier.
