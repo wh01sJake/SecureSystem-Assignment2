@@ -43,6 +43,11 @@ def rijndael():
     lib.invert_sub_bytes.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
     lib.invert_sub_bytes.restype = None
 
+    lib.shift_rows.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
+    lib.shift_rows.restype = None
+    lib.invert_shift_rows.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
+    lib.invert_shift_rows.restype = None
+
     return lib
 
 
