@@ -3,3 +3,6 @@ main
 *.so
 __pycache__/
 .pytest_cache/
+report.md
+report.pdf
+.DS_Store
