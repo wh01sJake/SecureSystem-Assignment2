@@ -53,6 +53,13 @@ def rijndael():
     lib.invert_mix_columns.argtypes = [ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int]
     lib.invert_mix_columns.restype = None
 
+    lib.add_round_key.argtypes = [
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.POINTER(ctypes.c_ubyte),
+        ctypes.c_int,
+    ]
+    lib.add_round_key.restype = None
+
     return lib
 
 

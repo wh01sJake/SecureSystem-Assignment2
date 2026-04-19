@@ -233,10 +233,15 @@ void invert_mix_columns(unsigned char *block, aes_block_size_t block_size) {
 /*
  * This operation is shared between encryption and decryption
  */
-void add_round_key(unsigned char *block, 
+void add_round_key(unsigned char *block,
                    unsigned char *round_key,
                    aes_block_size_t block_size) {
-  // TODO: Implement me!
+  // AddRoundKey is literally a per-byte XOR with the round key.
+  // Easiest operation in AES by a wide margin.
+  size_t numberOfBytes = block_size_to_bytes(block_size);
+  for (size_t i = 0; i < numberOfBytes; i++) {
+    block[i] ^= round_key[i];
+  }
 }
 
 /*
